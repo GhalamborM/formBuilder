@@ -1,3 +1,10 @@
+## [3.23.3](https://github.com/kevinchappell/formBuilder/compare/v3.23.2...v3.23.3) (2026-11-14)
+
+
+### Bug Fixes
+
+* replace mi18n with @draggable/i18n to drop bundled axios ([#1672](https://github.com/kevinchappell/formBuilder/issues/1672)) ([26cd39f](https://github.com/kevinchappell/formBuilder/commit/26cd39fcd98ba0ce2dc5dead8b41bc5e761d20ed)), closes [#1671](https://github.com/kevinchappell/formBuilder/issues/1671)
+
 ## [3.23.2](https://github.com/kevinchappell/formBuilder/compare/v3.23.1...v3.23.2) (2026-10-29)
 
 
