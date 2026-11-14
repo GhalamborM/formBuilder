@@ -5,6 +5,7 @@ var defaults = {
   container: false,
   formData: false,
   dataType: 'json', // 'xml' | 'json'
+  disableHTMLLabels: false,
   label: {
     formRendered: 'Form Rendered',
     noFormData: 'No form data.',
@@ -22,6 +23,13 @@ var defaults = {
     warning: function(message) {
       return console.warn(message);
     }
-  }
+  },
+  sanitizerOptions: {
+    clobberingProtection: {
+      document: false,
+      form: false,
+    },
+    backendOrder: ['dompurify','sanitizer','fallback'],
+  },
 }
 </code></pre>

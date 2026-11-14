@@ -4,29 +4,49 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [12]
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+      packages: write
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Nodejs ${{ matrix.node }}
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
       - name: Install dependencies
         env:
           CI: true
         run: npm install
+
+      - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
+        run: npm audit signatures
+
       - name: Build the plugin
         run: npm run build
+
       - name: Publish the plugin
         if: success()
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          FORMBUILDER_WEBSITE_DIR: ${{ secrets.FORMBUILDER_WEBSITE_DIR }}
-          FORMBUILDER_WEBSITE_REPO: ${{ secrets.FORMBUILDER_WEBSITE_REPO }}
         run: npx semantic-release
+
+      - name: Get npm package version using jq
+        if: success()
+        id: get_version
+        run: |
+          VERSION=$(jq -r ".version" package.json)
+          echo "::set-output name=version::$VERSION"

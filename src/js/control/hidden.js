@@ -3,6 +3,7 @@ import control from '../control'
 /**
  * Hidden input class
  * Output a <input type="hidden" ... /> form element
+ * @extends control
  */
 export default class controlHidden extends control {
   /**
@@ -10,8 +11,9 @@ export default class controlHidden extends control {
    * @return {Object} DOM Element to be injected into the form.
    */
   build() {
+    this.field = this.markup('input', null, this.config)
     return {
-      field: this.markup('input', null, this.config),
+      field: this.field,
       layout: 'hidden',
     }
   }
@@ -22,7 +24,7 @@ export default class controlHidden extends control {
   onRender() {
     // Set userData if available
     if (this.config.userData) {
-      $('#' + this.config.name).val(this.config.userData[0])
+      $(this.field).val(this.config.userData[0])
     }
   }
 }

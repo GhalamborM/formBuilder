@@ -24,6 +24,7 @@ nav:
 - formBuilder Demos:
   - AngularJS: formBuilder/demos/angular.md
   - Basic: formBuilder/demos/basic.md
+  - Bootstrap Grid: formBuilder/demos/bootstrap-grid.md
   - Custom Elements: formBuilder/options/templates.md
   - Data: formBuilder/demos/data.md
   - React: formBuilder/demos/react.md
@@ -72,10 +73,12 @@ nav:
   - onClearAll: formBuilder/options/onClearAll.md
   - onCloseFieldEdit: formBuilder/options/onCloseFieldEdit.md
   - onOpenFieldEdit: formBuilder/options/onOpenFieldEdit.md
+  - onRemoveField: formBuilder/options/onRemoveField.md
   - onSave: formBuilder/options/onSave.md
   - persistDefaultFields: formBuilder/options/persistDefaultFields.md
   - replaceFields: formBuilder/options/replaceFields.md
   - roles: formBuilder/options/roles.md
+  - sanitizerOptions: formBuilder/options/sanitizerOptions.md
   - scrollToFieldOnAdd: formBuilder/options/scrollToFieldOnAdd.md
   - showActionButtons: formBuilder/options/showActionButtons.md
   - sortableControls: formBuilder/options/sortableControls.md
@@ -98,10 +101,12 @@ nav:
 - formRender Options:
   - Overview: formRender/options.md
   - container: formRender/options/container.md
+  - disableHTMLLabels: formRender/options/disableHTMLLabels.md
   - formData: formRender/options/formData.md
   - layout: formRender/options/layout.md
   - layoutTemplates: formRender/options/layoutTemplates.md
   - render: formRender/options/render.md
+  - sanitizerOptions: formRender/options/sanitizerOptions.md
 - Contributing: contributing.md
 - License: license.md
 extra_css:
@@ -111,4 +116,3 @@ extra_javascript:
   - '//cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js'
   - 'js/scripts.js'
   - '//production-assets.codepen.io/assets/embed/ei.js'
-  - '//sidecar.gitter.im/dist/sidecar.v1.js'

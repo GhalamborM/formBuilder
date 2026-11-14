@@ -1,4 +1,7 @@
 .stage-wrap {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
   position: relative;
   padding: 0;
   margin: 0;
@@ -44,7 +47,9 @@
 
       border-color: #66afe9;
       outline: 0;
-      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.1), 0 0 8px rgba(102, 175, 233, 0.6);
+      box-shadow:
+        inset 0 1px 1px rgba(0, 0, 0, 0.1),
+        0 0 8px rgba(102, 175, 233, 0.6);
 
       li {
         :hover {
@@ -61,7 +66,9 @@
     margin-left: 0;
     margin-bottom: 3px;
     background-color: $white;
-    transition: background-color 250ms ease-in-out, margin-top 400ms;
+    transition:
+      background-color 250ms ease-in-out,
+      margin-top 400ms;
 
     &.hidden-field {
       background-color: $hidden-field-bgcolor;
@@ -170,6 +177,28 @@
       &:hover {
         text-decoration: none;
       }
+    }
+
+    &.header-field {
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        word-break: break-word;
+      }
+    }
+
+    &.paragraph-field {
+      p {
+        word-break: break-word;
+      }
+    }
+
+    .field-label {
+      display: inline;
+      overflow-wrap: break-word;
     }
 
     &.button-field,
@@ -295,6 +324,7 @@
 
     input[type='number'] {
       width: auto;
+      max-width: 100%;
     }
 
     input[type='color'] {
@@ -369,8 +399,13 @@
 
     .toggle-form {
       &:hover {
+        border-color: lighten($grey, 40%);
         background-color: $edit;
         color: $white;
+      }
+
+      &::before {
+        margin: 0;
       }
     }
 
@@ -420,9 +455,11 @@
     }
   }
 
-  .radio-group-field {
+  .radio-group-field,
+  .select-field {
     .sortable-options li:nth-child(2) .remove {
-      display: none;
+      opacity: 0;
+      pointer-events: none;
     }
   }
 
@@ -437,6 +474,9 @@
     padding: 0;
 
     > li {
+      display: flex !important;
+      flex-wrap: wrap;
+
       cursor: move;
       margin: 1px;
 
@@ -444,20 +484,21 @@
       background-color: $white;
 
       &:nth-child(1) .remove {
-        display: none;
+        opacity: 0;
+        pointer-events: none;
       }
 
       .remove {
-        position: relative;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         opacity: 1;
-        float: right;
-        right: 14px;
-        height: 18px;
         width: 18px;
-        top: 8px;
         font-size: 12px;
         padding: 0;
         color: $error;
+        margin-left: 3px;
         &::before {
           margin: 0;
         }
@@ -471,12 +512,15 @@
     }
 
     .option-selected {
-      margin: 0;
-      width: 5%;
+      margin: 0 3px 0 0;
+      flex: none;
     }
 
     input[type='text'] {
-      width: calc(44.5% - 17px);
+      flex-grow: 1;
+      flex-shrink: 0;
+      flex-basis: auto;
+      width: 100px;
       margin: 0 3px;
       float: none;
     }
@@ -520,10 +564,10 @@
     margin: 0;
     border: 1px solid $input-border-color;
 
-    .input-wrap {
+    .input-wrap,
+    .input-group-wrap {
       width: 81.33333333%;
       margin-left: 2%;
-      float: left;
 
       > input[type='checkbox'] {
         margin-top: 8px;
@@ -543,6 +587,10 @@
       height: auto;
     }
 
+    [contenteditable].form-control {
+      display: inline-block;
+    }
+
     [contenteditable].form-control,
     input[type='text'],
     input[type='number'],
@@ -560,16 +608,11 @@
       .input-wrap {
         width: 100%;
         margin-left: 0;
-        float: none;
       }
     }
 
     input[type='number'] {
       width: auto;
-    }
-
-    .btn-group {
-      margin-left: 2%;
     }
 
     .false-label,
@@ -585,7 +628,6 @@
         margin-bottom: 0;
         text-align: right;
         font-weight: 700;
-        float: left;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -594,7 +636,6 @@
         @include breakpoint('phone-lrg') {
           display: block;
           width: auto;
-          float: none;
           text-align: left;
 
           &.empty-label {
@@ -609,10 +650,29 @@
       &.roles-label,
       &.other-label {
         text-align: left;
-        float: none;
         margin-bottom: -3px;
         font-weight: 400;
         width: calc(81.3333% - 23px);
+      }
+    }
+
+    .input-group-wrap {
+      display: flex;
+      gap: 2em;
+
+      label {
+        width: auto;
+        display: block;
+        text-align: left;
+      }
+
+      .form-group {
+        flex-direction: column;
+        width: auto;
+      }
+
+      .input-wrap {
+        margin: 0;
       }
     }
 
@@ -621,7 +681,8 @@
         border: 1px solid $error;
       }
 
-      &.fld-maxlength {
+      &.fld-maxlength,
+      &.fld-rows {
         width: 75px;
       }
 
@@ -677,60 +738,10 @@
   }
 }
 
-.formbuilder-mobile {
+@at-root #{selector-append(".formbuilder-mobile", &)} {
   .field-actions {
     opacity: 1;
   }
-}
-
-/*   ------------   TOOLTIP   ------------   */
-
-*[tooltip] {
-  position: relative;
-}
-
-*[tooltip]:hover:after {
-  background: rgba(0, 0, 0, 0.9);
-  border-radius: 5px 5px 5px 0;
-  bottom: 23px;
-  color: $white;
-  content: attr(tooltip);
-  padding: 10px 5px;
-  position: absolute;
-  z-index: 98;
-  left: 2px;
-  width: 230px;
-  text-shadow: none;
-  font-size: 12px;
-  line-height: 1.5em;
-  cursor: default;
-}
-
-*[tooltip]:hover:before {
-  border: solid;
-  border-color: $grey-dark transparent;
-  border-width: 6px 6px 0;
-  bottom: 17px;
-  content: '';
-  left: 2px;
-  position: absolute;
-  z-index: 99;
-  cursor: default;
-}
-
-.tooltip-element {
-  visibility: visible;
-  color: $white;
-  background: $black;
-  width: 16px;
-  height: 16px;
-  border-radius: 8px;
-  display: inline-block;
-  text-align: center;
-  line-height: 16px;
-  margin: 0 5px;
-  font-size: 12px;
-  cursor: default;
 }
 
 /*   ------------   Toast Message   ------------   */
@@ -751,8 +762,12 @@
 
 .snackbar.show {
   visibility: visible;
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  -webkit-animation:
+    fadein 0.5s,
+    fadeout 0.5s 2.5s;
+  animation:
+    fadein 0.5s,
+    fadeout 0.5s 2.5s;
 }
 
 @-webkit-keyframes fadein {
@@ -803,7 +818,6 @@
 .ui-state-highlight {
   border-radius: 3px;
   border: 1px dashed #0d99f2;
-  border-radius: 3px;
   background-color: #e5f5f8;
   width: 12px;
 }
@@ -833,15 +847,24 @@
   white-space: nowrap;
 }
 
-.colHoverTempStyle {
-  padding-left: 7px !important;
-  padding-right: 7px !important;
+.colWithInsertButtons {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   flex: 95 1 0% !important;
 }
 
 .rowWrapper {
-  margin-left: 0px !important;
-  margin-right: 0px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.rowWrapper:last-child {
+  flex-grow: 1;
+}
+
+.rowWrapper:not(.tempRowWrapper) {
+  padding-top: 1em;
+  padding-bottom: 1em;
 }
 
 .btnAddControl {
@@ -861,10 +884,39 @@
 .hoverDropStyleInverse {
   background-color: #0d99f2;
   border: 1px dashed #e5f5f8;
+  min-height: 20px;
+}
+
+.hoverDropStyleInverse .colWrapper {
+  max-width: calc(100% - 40px);
+}
+
+.stage-wrap > .hoverDropStyleInverse {
+  width: 100%;
+}
+
+.rowWrapper > .hoverDropStyleInverse {
+  min-width: 40px;
+  flex-grow: 1;
+}
+
+.hoverDropStyleInverse:last-child {
+  flex-grow: 1;
 }
 
 .invisibleRowPlaceholder {
-  width: 0px !important;
+  width: 0 !important;
   position: fixed !important;
   left: -100px !important;
+}
+
+ol.options-no-select input[type='radio'] {
+  display: none;
+}
+
+.hidden {
+  display: none !important;
+}
+.flex {
+  display: flex !important;
 }

@@ -4,6 +4,7 @@ import { trimObj } from '../utils'
 /**
  * Text input class
  * Output a <input type="text" ... /> form element
+ * @extends control
  */
 export default class controlSelect extends control {
   /**
@@ -32,10 +33,10 @@ export default class controlSelect extends control {
       data.name = data.name + '[]'
     }
 
-    if (type === 'checkbox-group' && data.required) {
+    if ((type === 'checkbox-group' || type === 'radio-group') && data.required) {
       const self = this
       const defaultOnRender = this.onRender.bind(this)
-      this.onRender = function() {
+      this.onRender = function () {
         defaultOnRender()
         self.groupRequired()
       }
@@ -48,8 +49,9 @@ export default class controlSelect extends control {
       if (placeholder && isSelect) {
         options.push(
           this.markup('option', placeholder, {
-            disabled: null,
-            selected: null,
+            disabled: true,
+            selected: true,
+            value: '',
           }),
         )
       }
@@ -91,6 +93,7 @@ export default class controlSelect extends control {
           const labelAttrs = { for: optionAttrs.id }
           let output = [input, this.markup('label', labelContents, labelAttrs)]
           if (toggle) {
+            delete labelAttrs.for
             labelAttrs.className = 'kc-toggle'
             labelContents.unshift(input, this.markup('span'))
             output = this.markup('label', labelContents, labelAttrs)
@@ -105,7 +108,7 @@ export default class controlSelect extends control {
       if (!isSelect && other) {
         const otherOptionAttrs = {
           id: `${data.id}-other`,
-          className: `${data.className} other-option`,
+          className: `${data.className ?? ''} other-option`,
           value: '',
         }
 
@@ -124,14 +127,13 @@ export default class controlSelect extends control {
               const otherInput = evt.target
               const other = otherInput.parentElement.previousElementSibling
               other.value = otherInput.value
-              other.name = `${data.id}[]`
             },
           },
           id: `${otherOptionAttrs.id}-value`,
           className: 'other-val',
         }
         const primaryInput = this.markup('input', null, optionAttrs)
-        const otherInputs = [document.createTextNode('Other'), this.markup('input', null, otherValAttrs)]
+        const otherInputs = [document.createTextNode(control.mi18n('other')), this.markup('input', null, otherValAttrs)]
         const inputLabel = this.markup('label', otherInputs, { for: optionAttrs.id })
         const wrapper = this.markup('div', [primaryInput, inputLabel], { className: wrapperClass })
         options.push(wrapper)
@@ -139,10 +141,14 @@ export default class controlSelect extends control {
     }
 
     // build & return the DOM elements
-    if (type == 'select') {
+    if (type === 'select') {
       this.dom = this.markup(optionType, options, trimObj(data, true))
     } else {
-      this.dom = this.markup('div', options, { className: type })
+      let className = type
+      if (inline) {
+        className += ` ${className}--inline`
+      }
+      this.dom = this.markup('div', options, { className })
     }
     return this.dom
   }
@@ -151,17 +157,20 @@ export default class controlSelect extends control {
    * setCustomValidity for checkbox-group
    */
   groupRequired() {
-    const checkboxes = this.element.getElementsByTagName('input')
+    const allInputs = this.element.getElementsByTagName('input')
+    const checkboxes = this.element.querySelectorAll('input:not([type=text])')
+    const otherCheckbox = this.element.querySelector('.other-option')
+    const otherValue = this.element.querySelector('.other-val')
     const setValidity = (checkbox, isValid) => {
       const minReq = control.mi18n('minSelectionRequired', 1)
-      if (!isValid) {
-        checkbox.setCustomValidity(minReq)
-      } else {
+      if (isValid) {
         checkbox.setCustomValidity('')
+      } else {
+        checkbox.setCustomValidity(minReq)
       }
     }
-    const toggleRequired = (checkboxes, isValid) => {
-      [].forEach.call(checkboxes, cb => {
+    const toggleRequired = (checkboxes, otherCheckbox, otherValue, isValid) => {
+      Array.prototype.forEach.call(checkboxes, cb => {
         if (isValid) {
           cb.removeAttribute('required')
         } else {
@@ -169,15 +178,23 @@ export default class controlSelect extends control {
         }
         setValidity(cb, isValid)
       })
+
+      if (otherCheckbox) {
+        if (otherCheckbox.checked) {
+          otherValue.setAttribute('required', 'required')
+        } else {
+          otherValue.removeAttribute('required')
+        }
+      }
     }
 
     const toggleValid = () => {
       const isValid = [].some.call(checkboxes, cb => cb.checked)
-      toggleRequired(checkboxes, isValid)
+      toggleRequired(checkboxes, otherCheckbox, otherValue, isValid)
     }
 
-    for (let i = checkboxes.length - 1; i >= 0; i--) {
-      checkboxes[i].addEventListener('change', toggleValid)
+    for (let i = allInputs.length - 1; i >= 0; i--) {
+      allInputs[i].addEventListener('change', toggleValid)
     }
     toggleValid()
   }
@@ -195,6 +212,12 @@ export default class controlSelect extends control {
           .val(selectedOptions)
           .prop('selected', true)
       } else if (this.config.type.endsWith('-group')) {
+        if (this.config.type === 'checkbox-group') {
+          //clear all checked elements prior to setting them from userData
+          this.dom.querySelectorAll('input[type=checkbox]').forEach(input => {
+            input.removeAttribute('checked')
+          })
+        }
         this.dom.querySelectorAll('input').forEach(input => {
           if (input.classList.contains('other-val')) {
             return
@@ -209,12 +232,8 @@ export default class controlSelect extends control {
           }
 
           // Did not find a match for the selectedOption, see if this is an "other"
-          if (input.id.endsWith('-other')) {
-            const otherVal = document.getElementById(`${input.id}-value`)
-            // If there is no value to set, don't check the other option
-            if (selectedOptions.length === 0) {
-              return
-            }
+          if (input.id.endsWith('-other') && selectedOptions.length > 0) {
+            const otherVal = this.dom.querySelector(`#${input.id}-value`)
 
             // set the other value
             input.setAttribute('checked', 'checked')

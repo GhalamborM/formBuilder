@@ -8,22 +8,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [12]
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Nodejs ${{ matrix.node }}
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
       - name: Install dependencies
         env:
           CI: true
         run: npm install
       - name: Build the plugin
         run: npm run build:all
-      - name: API Demo Deploy - https://kevinchappell.github.io/formBuilder/
+      - name: Deploy Demo 🚀 https://kevinchappell.github.io/formBuilder/
         if: success()
-        uses: maxheld83/ghpages@v0.2.1
-        env:
-          BUILD_DIR: demo/
-          GH_PAT: ${{ secrets.GH_TOKEN }}
+        uses: JamesIves/github-pages-deploy-action@v4.3.0
+        with:
+          branch: gh-pages
+          folder: demo

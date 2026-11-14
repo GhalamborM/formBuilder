@@ -9,6 +9,7 @@ Key files / folders:
   * `form-render.js` - the library & code for rendering formData json/xml created by formbuilder
   * `helper.js` - reusable methods that are used throughout `form-builder.js`
   * `layout.js` - the layout engine that produces each row of the form, and determines how the label, help text, and control widget will each fit together.
+  * `sanitizer.js` - Script injection and DOM clobbering protection library for formbuilder
   * `utils.js` - resuable methods thare are used in both `form-builder.js` and `form-render.js`
   
 # Controls
@@ -17,9 +18,9 @@ Key files / folders:
 
  Each control is represented by a class which inherits from the `control` class defined in `control.js`. A control class may be used by multiple types of controls.
  
- For an example in of how to [**create a new control**](controls), check out the Readme.md in the `control/` directory. 
+ For an example in of how to [**create a new control**](controls.md), check out the Readme.md in the `control/` directory. 
  
- For an example in of how to [**create a new control plugin**](control-plugins), check out the Readme.md in the `control/` directory.
+ For an example in of how to [**create a new control plugin**](control-plugins.md), check out the Readme.md in the `control/` directory.
  
  The parent class defined in `control.js` has two types of methods:
    * object level methods which are used to manipulate and create an instance of that control on a form
@@ -33,7 +34,7 @@ The following methods are static methods designed to be called on the class. E.g
   * `getRegistered` - used to retrieve an array of registered `types` (or `subtypes` of a specified `type`)
   * Child methods - these class level methods only rea lly make sense being called on individual child control classes. Those are grouped below. E.g. `let textLabel = control.getClass('text').label('text');`
     * `get definition` - child method - a getter method to define a static property for each `control` class. This method returns an object containing information about that types it represents, accessible through the `controlClass.definition` property. See '[Control definitions](#control-definitions)' below for more detail. 
-    * `mi18n` - child method - a wrapper to the `mi18n` that retrieves the translation for a specified lookup key - but checks i18n overrides or mi18n lookup key mapping in the class definition. (See [Control definitions](#control-definitions) below for more details).
+    * `mi18n` - child method - a wrapper to the [`@draggable/i18n`](https://github.com/Draggable/i18n) instance that retrieves the translation for a specified lookup key - but checks i18n overrides or mi18n lookup key mapping in the class definition. (See [Control definitions](#control-definitions) below for more details).
     * `label` - retrieves the label for a specified type
     * `active` - ensure the specified type is not defined as inactive
     * `icon` - retrieve the icon for this type
@@ -48,7 +49,7 @@ To define information about this control, `static get definition()` method will 
 
   * `mi18n` - this property allows you to map a lookup (generally the `type` or `subtype`) to a defined mi18n lookup. By default `form-builder` will look use the type or subtype to look up translations, but this property allows you to map those to different lookup keys. See `control/text.js` for an example.
 
-  * `i18n` - used primarily by control plugins. This allows you to encapsulate the translations within the plugin itself. While best practice is to use the mi18n library, a control plugin will generally need to be self contained. If any translations cannot be found defined here, `control.js` will fall back to looking up the `mi18n` object.
+  * `i18n` - used primarily by control plugins. This allows you to encapsulate the translations within the plugin itself. While best practice is to use the [@draggable/i18n](https://github.com/Draggable/i18n) library, a control plugin will generally need to be self contained. If any translations cannot be found defined here, `control.js` will fall back to looking up the `@draggable/i18n` instance.
 
 ```javascript
 // option 1 - define multiple translations
@@ -98,7 +99,19 @@ static get definition() {
   }
 }
 ```
-  
+
+* `disabledAttrs` - used primarily by control plugins. This allows you to disable default attrs for a control plugin where attributes are not used by the plugin or serve no purpose.
+```javascript
+static get definition() {
+  return {
+    disabledAttrs: [
+      'description',
+      'placeholder',
+    ],
+  }
+}
+```  
+
 The label for a control in the list of form builder controls should be defined as the translation for the `type`. E.g. if you want to rename the label for a textarea, you would update the mi18n translation for `textarea`, or define an override in the `i18n` property.
 
 # Layouts

@@ -4,6 +4,7 @@ import utils from '../utils'
 /**
  * Quill rich text editor element
  * See https://quilljs.com/ for more info
+ * @extends controlTextarea
  */
 export default class controlQuill extends controlTextarea {
   /**
@@ -11,8 +12,8 @@ export default class controlQuill extends controlTextarea {
    */
   configure() {
     const defaultClassConfig = {
-      js: '//cdn.quilljs.com/1.2.4/quill.js',
-      css: '//cdn.quilljs.com/1.2.4/quill.snow.css',
+      js: 'https://cdn.quilljs.com/1.2.4/quill.js',
+      css: 'https://cdn.quilljs.com/1.2.4/quill.snow.css',
     }
 
     const defaultEditorConfig = {
@@ -48,6 +49,9 @@ export default class controlQuill extends controlTextarea {
     //Textareas do not have an attribute 'type'
     delete attrs['type']
     this.field = this.markup('div', null, attrs)
+    if (this.field.classList.contains('form-control')) {
+      this.field.classList.remove('form-control')
+    }
     return this.field
   }
 

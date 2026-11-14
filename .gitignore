@@ -1,8 +1,16 @@
 node_modules
 bower_components
 npm-debug.log
-demo/
+/demo/
 dist/
 site
 .DS_Store
 yarn-error.log
+.idea
+.jest
+.vitest
+
+.agents/
+.claude/
+docs/superpowers
+skills-lock.json

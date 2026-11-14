@@ -1,6 +1,6 @@
 // CONTROL.JS
 import { camelCase, parsedHtml, markup, getStyles, getScripts, isCached } from './utils'
-import mi18n from 'mi18n'
+import mi18n from '@draggable/i18n'
 
 /**
  * Base class for all control classes
@@ -50,7 +50,7 @@ export default class control {
       control.controlConfig = {}
     }
     const classId = this.subtype ? this.type + '.' + this.subtype : this.type
-    this.classConfig = jQuery.extend({}, control.controlConfig[classId] || {})
+    this.classConfig = jQuery.extend({}, control.controlConfig[this.type] || {}, control.controlConfig[classId] || {})
 
     // if subtype, update the config type for injecting into DOM elements
     if (this.subtype) {
@@ -108,7 +108,6 @@ export default class control {
     for (const type of types) {
       // '.' is a restricted character for type names
       if (type.indexOf('.') !== -1) {
-        // eslint-disable-next-line max-len
         control.error(`Ignoring type ${type}. Cannot use the character '.' in a type name.`)
         continue
       }
@@ -119,7 +118,7 @@ export default class control {
 
   /**
    * Looks up the classRegister & returns registered types or subtypes
-   * @param  {String} type optional type of control we want to look up
+   * @param  {string|false} type optional type of control we want to look up
    * subtypes of. If not specified will return all types
    * @return {Array} registered types (or subtypes)
    */
@@ -134,7 +133,7 @@ export default class control {
       if (type) {
         return key.indexOf(type + '.') > -1
       }
-      return key.indexOf('.') == -1
+      return key.indexOf('.') === -1
     })
   }
 
@@ -163,7 +162,7 @@ export default class control {
   /**
    * Retrieve the class for a specified control type
    * @param {String} type type of control we are looking up
-   * @param {String} subtype if specified we'll try to find
+   * @param {String} [subtype] if specified we'll try to find
    * a class mapped to this subtype. If none found, fall back to the type.
    * @return {Class} control subclass as defined in the call to register
    */
@@ -215,7 +214,7 @@ export default class control {
    * By default looks for translations defined against the class (for plugin controls)
    * Expects {locale1: {type: label}, locale2: {type: label}}, or {default: label}, or {local1: label, local2: label2}
    * @param {String} lookup string to retrieve the label / translated string for
-   * @param {Object|Number|String} args - string or key/val pairs for string lookups with variables
+   * @param {Object|Number|String} [args] - string or key/val pairs for string lookups with variables
    * @return {String} the translated label
    */
   static mi18n(lookup, args) {
@@ -248,7 +247,7 @@ export default class control {
    * @return {Boolean} isActive
    */
   static active(type) {
-    return !Array.isArray(this.definition.inactive) || this.definition.inactive.indexOf(type) == -1
+    return !Array.isArray(this.definition.inactive) || this.definition.inactive.indexOf(type) === -1
   }
 
   /**
@@ -311,7 +310,7 @@ export default class control {
 
       /**
        * onRender event to execute code each time an instance of this control is injected into the DOM
-       * @param {Node} element
+       * @param {Node} evt
        */
       render: evt => {
         // check for a class render event - default to an empty function
@@ -373,4 +372,34 @@ export default class control {
   static camelCase(str) {
     return camelCase(str)
   }
+}
+
+control.jsonAttrs = new Map()
+
+control.parseJsonAttrs = field => {
+  const attrs = control.jsonAttrs.get(field?.type)
+  if (attrs) {
+    attrs.forEach(attr => {
+      if (typeof field[attr] === 'string') {
+        try {
+          field[attr] = JSON.parse(field[attr])
+        } catch {
+          /* leave malformed string untouched */
+        }
+      }
+    })
+  }
+  return field
+}
+
+control.stringifyJsonAttrs = field => {
+  const attrs = control.jsonAttrs.get(field?.type)
+  if (attrs) {
+    attrs.forEach(attr => {
+      if (field[attr] != null && typeof field[attr] !== 'string') {
+        field[attr] = JSON.stringify(field[attr])
+      }
+    })
+  }
+  return field
 }

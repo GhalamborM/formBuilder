@@ -3,6 +3,7 @@ import { filter } from '../dom'
 /**
  * Autocomplete class
  * Output an autocomplete form element
+ * @extends control
  */
 export default class controlAutocomplete extends control {
   /**
@@ -268,11 +269,8 @@ export default class controlAutocomplete extends control {
       let selectedOption = null
 
       $options.find('li').each(function() {
-        // eslint-disable-next-line no-invalid-this
         if ($(this).attr('value') === preSelectedOption) {
-          // eslint-disable-next-line no-invalid-this
           selectedOption = $(this).get(0)
-          return
         }
       })
 

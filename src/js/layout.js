@@ -1,6 +1,7 @@
 // LAYOUT.JS
 import utils from './utils'
 import { getAllGridRelatedClasses } from './utils'
+import control from './control'
 
 const processClassName = (data, field) => {
   // wrap the output in a form-group div & return
@@ -12,11 +13,22 @@ const processClassName = (data, field) => {
 
     if (classes && classes.length > 0) {
       className += ` ${classes.join(' ')}`
-    }
 
-    // Now that the col- types were lifted, remove from the actual input field
-    if (field.classList) {
-      field.classList.remove(...classes)
+      // Now that the row- & col- types were lifted, remove from the actual input field and any child elements
+      //field may be a single element, dom fragment, or an array of elements
+      if (!Array.isArray(field)) {
+        field = [field]
+      }
+      field.forEach(item => {
+        if (item.classList) {
+          item.classList.remove(...classes)
+        }
+        item.querySelectorAll('[class*=row-],[class*=col-]').forEach(element => {
+          if (element.classList) {
+            element.classList.remove(...classes)
+          }
+        })
+      })
     }
   }
 
@@ -32,10 +44,14 @@ export default class layout {
   /**
    * Prepare the templates for layout
    * @param {Object} templates object containing custom or overwrite templates
-   * @param {Boolean} preview - are we rendering a preview for the formBuilder stage
+   * @param {Boolean} [preview=false] - are we rendering a preview for the formBuilder stage
+   * @param {Boolean} [disableHTMLLabels=false] - do we render labels as HTML or plain text
+   * @param {Array} [controlConfig={}] - ability for controls to have their own configuration / options of the format control identifier (type, or type.subtype): {options}
    */
-  constructor(templates, preview) {
-    this.preview = preview
+  constructor(templates, preview = false, disableHTMLLabels = false, controlConfig = {}) {
+    this.preview = preview ?? false
+    this.disableHTMLLabels = disableHTMLLabels ?? false
+    this.controlConfig = controlConfig ?? {}
 
     // supported templates for outputting a field
     // preferred layout template can be indicated by specifying a 'layout' in the return object of control::build
@@ -84,10 +100,10 @@ export default class layout {
    *   - field - the DOM element
    *   - noLabel - this control shouldn't have a label (nor a space for a label)
    *   - hidden - this control shouldn't render anything visible to the page
-   * @param {Object} renderControl - the relevant control class
+   * @param {Class} renderControl - the relevant control class
    * @param {Object} data - configuration data passed through formData for this control
-   * @param {String} forceTemplate - programatically force the template with which this control to be rendered
-   * @return {Object} element
+   * @param {String} forceTemplate - programmatically force the template with which this control to be rendered
+   * @return {HTMLElement} element
    */
   build(renderControl, data, forceTemplate) {
     // prepare the data
@@ -102,10 +118,21 @@ export default class layout {
     this.data = jQuery.extend({}, data)
 
     // build the control
-    const control = new renderControl(data, this.preview)
-    let field = control.build()
+    control.controlConfig = this.controlConfig
+    const controlInstance = new renderControl(data, this.preview)
+    let field = controlInstance.build()
     if (typeof field !== 'object' || !field.field) {
       field = { field: field }
+    }
+
+    // If field is a raw HTML string, convert to HTMLElement(s)
+    if (typeof field.field === 'string') {
+      const tmpField = this.markup('div', field.field, {})
+      if (tmpField.childElementCount === 1) {
+        field.field = tmpField.children.item(0)
+      } else {
+        field.field = Array.from(tmpField.children)
+      }
     }
 
     // build the label & help text
@@ -122,10 +149,10 @@ export default class layout {
     const element = this.processTemplate(elementTemplate, field.field, label, help)
 
     // execute prerender events
-    control.on('prerender')(element)
+    controlInstance.on('prerender')(element)
 
     // bind control on render events
-    element.addEventListener('fieldRendered', control.on('render'))
+    element.addEventListener('fieldRendered', controlInstance.on('render'))
     return element
   }
 
@@ -135,7 +162,7 @@ export default class layout {
    */
   label() {
     const label = this.data.label || ''
-    const labelText = utils.parsedHtml(label)
+    const labelText = this.disableHTMLLabels ? document.createTextNode(label) : utils.parsedHtml(label)
     const labelContents = [labelText]
     if (this.data.required) {
       labelContents.push(this.markup('span', '*', { className: 'formbuilder-required' }))
@@ -187,7 +214,7 @@ export default class layout {
    * Process a template & prepare the results
    * @param {String} template - template key to execute
    * @param {Array} args - any number of args that should be passed to the template. this.data is sent as the last parameter to any template.
-   * @return {DOMElement}
+   * @return {HTMLElement}
    */
   processTemplate(template, ...args) {
     let processed = this.templates[template](...args, this.data)

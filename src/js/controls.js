@@ -1,9 +1,12 @@
 import './control/index'
 import control from './control'
-import controlCustom from './control/custom'
+import customControls from './customControls'
 import { unique, hyphenCase, markup as m } from './utils'
 import { empty } from './dom'
-import { css_prefix_text } from '../fonts/config.json'
+import fontConfig from '../fonts/config.json'
+import storageAvailable from 'storage-available'
+
+const css_prefix_text = fontConfig.css_prefix_text
 
 /**
  * control parent class for creating control panel
@@ -17,12 +20,7 @@ export default class Controls {
   constructor(opts, d) {
     this.opts = opts
     this.dom = d.controls
-    this.custom = controlCustom
-    this.getClass = control.getClass
     this.getRegistered = control.getRegistered
-    // ability for controls to have their own configuration / options
-    // of the format control identifier (type, or type.subtype): {options}
-    control.controlConfig = opts.controlConfig || {}
     this.init()
   }
 
@@ -43,19 +41,16 @@ export default class Controls {
     // load in any custom specified controls, or preloaded plugin controls
     control.loadCustom(opts.controls)
     // register any passed custom templates & fields
-    if (Object.keys(opts.fields).length) {
-      controlCustom.register(opts.templates, opts.fields)
-    }
-
+    this.custom =  new customControls(opts.templates, opts.fields)
+    
     // retrieve a full list of loaded controls
     const registeredControls = control.getRegistered()
-    this.registeredControls = registeredControls
-    const customFields = controlCustom.getRegistered()
+    const customFields = this.custom.getRegistered()
     if (customFields) {
       jQuery.merge(registeredControls, customFields)
     }
-    const registeredSubtypes = control.getRegisteredSubtypes()
-    this.registeredSubtypes = registeredSubtypes
+
+    this.registeredSubtypes = control.getRegisteredSubtypes()
 
     // if we support rearranging control order, add classes to support this
     if (opts.sortableControls) {
@@ -69,10 +64,12 @@ export default class Controls {
     for (let i = 0; i < registeredControls.length; i++) {
       const type = registeredControls[i]
       // first check if this is a custom control
-      let custom = controlCustom.lookup(type)
+      let custom = this.custom.lookup(type)
       let controlClass
+      let label
       if (custom) {
         controlClass = custom.class
+        label = this.custom.label(type)
       } else {
         custom = {}
 
@@ -81,9 +78,9 @@ export default class Controls {
         if (!controlClass || !controlClass.active(type)) {
           continue
         }
+        label = controlClass.label(type)
       }
       const icon = custom.icon || controlClass.icon(type)
-      let label = custom.label || controlClass.label(type)
       const iconClassName = !icon ? custom.iconClassName || `${css_prefix_text + type.replace(/-[\d]{4}$/, '')}` : ''
 
       // if the class has specified a custom icon, inject it into the label
@@ -107,7 +104,7 @@ export default class Controls {
         if (set.icon) {
           label = `<span class="control-icon">${set.icon}</span>${label}`
         }
-        const inputSet = m('li', label, {
+        const inputSet = m('li', m('span', label), {
           className: `input-set-control input-set-${i}`,
         })
         inputSet.dataset.type = name
@@ -129,7 +126,7 @@ export default class Controls {
     let fieldOrder
 
     // retrieve any saved ordering from the session
-    if (window.sessionStorage) {
+    if (storageAvailable('sessionStorage')) {
       if (opts.sortableControls) {
         fieldOrder = window.sessionStorage.getItem('fieldOrder')
       } else {
@@ -182,5 +179,16 @@ export default class Controls {
       }
     })
     this.dom.appendChild(fragment)
+  }
+
+  /**
+   * Retrieve the class for a specified control type
+   * @param {String} type type of control we are looking up
+   * @param {String} [subtype] if specified we'll try to find
+   * a class mapped to this subtype. If none found, fall back to the type.
+   * @return {Class} control subclass as defined in the call to register
+   */
+  getClass(type, subtype) {
+    return this.custom.getClass(type) || control.getClass(type, subtype)
   }
 }
